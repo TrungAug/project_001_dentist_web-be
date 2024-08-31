@@ -1,0 +1,83 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.ServiceType;
+import com.DuAn.dentistApp.model.request.ServiceTypeRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.ServiceTypeRepository;
+import com.DuAn.dentistApp.service.service.ServiceTypeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class ServiceTypeServiceImpl implements ServiceTypeService {
+    @Autowired
+    ServiceTypeRepository serviceTypeRepository;
+
+    @Override
+    public ServiceType findByServiceTypeId(int serviceTypeId) {
+        return serviceTypeRepository.findById(serviceTypeId).orElseThrow(null);
+    }
+
+    @Override
+    public List<ServiceType> findAllServiceType() {
+        return serviceTypeRepository.findAll() ;
+    }
+
+    @Override
+    public List<ServiceType> findAllServiceTypeExceptDeleted() {
+        return serviceTypeRepository.findAll().stream()
+                .filter(serviceType -> !serviceType.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ServiceType saveServiceType(ServiceTypeRequest serviceTypeRequest) {
+        var serviceType = ServiceType
+                                  .builder()
+                                  .typeName(serviceTypeRequest.getType())
+                                  .description(serviceTypeRequest.getDescription())
+                                  .build();
+        serviceTypeRepository.save(serviceType);
+        return serviceType;
+    }
+
+    @Override
+    public ServiceType updateServiceType(int serviceTypeId, ServiceTypeRequest serviceTypeRequest) {
+        var serviceType = ServiceType
+                                  .builder()
+                                  .service_TypeId(serviceTypeId)
+                                  .typeName(serviceTypeRequest.getType())
+                                  .description(serviceTypeRequest.getDescription())
+                                  .build();
+        serviceTypeRepository.save(serviceType);
+        return serviceType;
+    }
+
+    @Override
+    public MessageResponse delete(int serviceTypeId) {
+        try {
+            serviceTypeRepository.deleteById(serviceTypeId);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+
+    @Override
+    public MessageResponse softDeleteServiceType(int serviceTypeId) {
+        try {
+            var serviceType =  serviceTypeRepository.findById(serviceTypeId)
+                                       .orElseThrow(() -> new RuntimeException("service Type not found"));
+            serviceType.setDeleted(true) ;
+            serviceTypeRepository.save(serviceType);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+}

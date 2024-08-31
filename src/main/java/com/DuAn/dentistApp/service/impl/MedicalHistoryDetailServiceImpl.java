@@ -1,0 +1,94 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.MedicalHistoryDetail;
+import com.DuAn.dentistApp.model.request.MedicalHistoryDetailRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.MedicalHistoryDetailRepository;
+import com.DuAn.dentistApp.repositories.MedicalHistoryRepository;
+import com.DuAn.dentistApp.repositories.PatientRepository;
+import com.DuAn.dentistApp.service.service.MedicalHistoryDetailService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class MedicalHistoryDetailServiceImpl implements MedicalHistoryDetailService {
+    @Autowired
+    MedicalHistoryDetailRepository medicalHistoryDetailRepository;
+    @Autowired
+    PatientRepository patientRepository;
+    @Autowired
+    MedicalHistoryRepository medicalHistoryRepository;
+
+    @Override
+    public MedicalHistoryDetail findByMedicalHistoryDetailId(int medicalHistoryDetailId) {
+        return medicalHistoryDetailRepository.findById(medicalHistoryDetailId).orElseThrow(null);
+    }
+
+    @Override
+    public List<MedicalHistoryDetail> findAllMedicalHistoryDetail() {
+        return medicalHistoryDetailRepository.findAll() ;
+    }
+
+    @Override
+    public List<MedicalHistoryDetail> findAllMedicalHistoryDetailExceptDeleted() {
+        return medicalHistoryDetailRepository.findAll().stream()
+                .filter(medicalHistoryDetail -> !medicalHistoryDetail.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public MedicalHistoryDetail saveMedicalHistoryDetail(MedicalHistoryDetailRequest medicalHistoryDetailRequest) {
+        var medicalHistoryDetail = MedicalHistoryDetail
+                                           .builder()
+                                           .description(medicalHistoryDetailRequest.getDescription())
+                                           .medicalHistory(medicalHistoryRepository.findById(medicalHistoryDetailRequest.getMedicalHistoryId()).orElse(null))
+                                           .patient(patientRepository.findById(medicalHistoryDetailRequest.getPatientId()).orElse(null))
+                                           .build();
+
+        medicalHistoryDetailRepository.save(medicalHistoryDetail);
+        return medicalHistoryDetail;
+    }
+
+    @Override
+    public MedicalHistoryDetail updateMedicalHistoryDetail(int medicalHistoryDetailId, MedicalHistoryDetailRequest medicalHistoryDetailRequest) {
+        var medicalHistoryDetail = MedicalHistoryDetail
+                                           .builder()
+                                           .medicalHistoryDetailId(medicalHistoryDetailId)
+                                           .description(medicalHistoryDetailRequest.getDescription())
+                                           .medicalHistory(medicalHistoryRepository.findById(medicalHistoryDetailRequest.getMedicalHistoryId()).orElse(null))
+                                           .patient(patientRepository.findById(medicalHistoryDetailRequest.getPatientId()).orElse(null))
+                                           .build();
+
+        medicalHistoryDetailRepository.save(medicalHistoryDetail);
+        return medicalHistoryDetail;
+    }
+
+    @Override
+    public MessageResponse delete(int medicalHistoryDetailId) {
+        try {
+            medicalHistoryDetailRepository.deleteById(medicalHistoryDetailId);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+
+    @Override
+    public MessageResponse softDeleteMedicalHistoryDetail(int medicalHistoryDetailId) {
+        try {
+            var medicalHistoryDetail = medicalHistoryDetailRepository.findById(medicalHistoryDetailId)
+                                               .orElseThrow(() -> new RuntimeException("medical History Detail Automation not found"));
+            medicalHistoryDetail.setDeleted(true) ;
+
+            medicalHistoryDetailRepository.save(medicalHistoryDetail);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+}

@@ -1,0 +1,93 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.AppointmentRecordIssues;
+import com.DuAn.dentistApp.model.request.AppointmentRecordIssuesRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.AppointmentPatientRecordRepository;
+import com.DuAn.dentistApp.repositories.AppointmentRecordIssuesRepository;
+import com.DuAn.dentistApp.repositories.DentalIssuesRepository;
+import com.DuAn.dentistApp.service.service.AppointmentRecordIssuesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class AppointmentRecordIssuesServiceImpl implements AppointmentRecordIssuesService {
+    @Autowired
+    AppointmentRecordIssuesRepository appointmentRecordIssuesRepository;
+
+    @Autowired
+    AppointmentPatientRecordRepository appointmentPatientRecordRepository;
+    @Autowired
+    DentalIssuesRepository dentalIssuesRepository;
+
+    @Override
+    public AppointmentRecordIssues findByAppointmentRecordIssuesId(int appointmentRecordIssuesId) {
+        return appointmentRecordIssuesRepository.findById(appointmentRecordIssuesId).orElseThrow(null);
+    }
+
+    @Override
+    public List<AppointmentRecordIssues> findAllAppointmentRecordIssues() {
+        return appointmentRecordIssuesRepository.findAll();
+    }
+
+    @Override
+    public List<AppointmentRecordIssues> findAllAppointmentRecordIssuesExceptDeleted() {
+        return appointmentRecordIssuesRepository.findAll()
+                .stream()
+                .filter(appointmentRecordIssues -> !appointmentRecordIssues.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public AppointmentRecordIssues saveAppointmentRecordIssues(AppointmentRecordIssuesRequest appointmentRecordIssuesRequest) {
+        AppointmentRecordIssues appointmentRecordIssues = AppointmentRecordIssues
+                                                                  .builder()
+                                                                  .appointmentPatientRecord(appointmentPatientRecordRepository.findById(appointmentRecordIssuesRequest.getAppointmentPatientRecordId()).orElse(null))
+                                                                  .dentalIssues(dentalIssuesRepository.findById(appointmentRecordIssuesRequest.getDentalIssuesId()).orElse(null))
+                                                                  .description(appointmentRecordIssuesRequest.getDescription())
+                                                                  .build();
+        appointmentRecordIssuesRepository.save(appointmentRecordIssues);
+        return appointmentRecordIssues;
+    }
+
+    @Override
+    public AppointmentRecordIssues updateAppointmentRecordIssues(int appointmentRecordIssuesId, AppointmentRecordIssuesRequest appointmentRecordIssuesRequest) {
+        AppointmentRecordIssues appointmentRecordIssues = AppointmentRecordIssues
+                                                                  .builder()
+                                                                  .appointmentRecordIssuesId(appointmentRecordIssuesId)
+                                                                  .appointmentPatientRecord(appointmentPatientRecordRepository.findById(appointmentRecordIssuesRequest.getAppointmentPatientRecordId()).orElse(null))
+                                                                  .dentalIssues(dentalIssuesRepository.findById(appointmentRecordIssuesRequest.getDentalIssuesId()).orElse(null))
+                                                                  .description(appointmentRecordIssuesRequest.getDescription())
+                                                                  .build();
+        appointmentRecordIssuesRepository.save(appointmentRecordIssues);
+        return appointmentRecordIssues;
+    }
+
+    @Override
+    public MessageResponse delete(int appointmentRecordIssuesId) {
+       try {
+           appointmentRecordIssuesRepository.deleteById(appointmentRecordIssuesId);
+           return new MessageResponse("successfully");
+       }catch (Exception e){
+           e.printStackTrace();
+           return new MessageResponse("fail");
+       }
+    }
+
+    @Override
+    public MessageResponse softDeleteAppointmentRecordIssues(int appointmentRecordIssuesId) {
+        try {
+            AppointmentRecordIssues appointmentRecordIssues = appointmentRecordIssuesRepository.findById(appointmentRecordIssuesId)
+                                                                      .orElseThrow(() -> new RuntimeException("Appointment Record Issues not found"));
+            appointmentRecordIssues.setDeleted(true);
+            appointmentRecordIssuesRepository.save(appointmentRecordIssues);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+}

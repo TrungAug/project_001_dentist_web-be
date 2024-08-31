@@ -1,0 +1,88 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.DentalSupplies;
+import com.DuAn.dentistApp.model.request.DentalSuppliesRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.DentalSuppliesRepository;
+import com.DuAn.dentistApp.repositories.DistributionSuppliesRepository;
+import com.DuAn.dentistApp.service.service.DentalSuppliesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class DentalSuppliesServiceImpl implements DentalSuppliesService {
+    @Autowired
+    DentalSuppliesRepository dentalSuppliesRepository;
+    @Autowired
+    DistributionSuppliesRepository distributionSuppliesRepository;
+    @Override
+    public DentalSupplies findByDentalSuppliesId(int dentalSuppliesId) {
+
+        return dentalSuppliesRepository.findById(dentalSuppliesId).orElseThrow(null);
+    }
+
+    @Override
+    public List<DentalSupplies> findAllDentalSupplies() {
+        return dentalSuppliesRepository.findAll() ;
+    }
+
+    @Override
+    public List<DentalSupplies> findAllDentalSuppliesExceptDeleted() {
+        return dentalSuppliesRepository.findAll().stream()
+                .filter(dentalSupplies -> !dentalSupplies.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public DentalSupplies saveDentalSupplies(DentalSuppliesRequest dentalSuppliesRequest) {
+        var dentalSupplies = DentalSupplies
+                                     .builder()
+                                     .description(dentalSuppliesRequest.getDescription())
+                                     .SuppliesName(dentalSuppliesRequest.getSuppliesName())
+                                     .distributionSupplies(distributionSuppliesRepository.findById(dentalSuppliesRequest.getDistributionSuppliesId()).orElse(null))
+                                     .build();
+        dentalSuppliesRepository.save(dentalSupplies);
+        return dentalSupplies;
+    }
+
+    @Override
+    public DentalSupplies updateDentalSupplies(int dentalSuppliesId, DentalSuppliesRequest dentalSuppliesRequest) {
+        var dentalSupplies = DentalSupplies
+                                     .builder()
+                                     .SuppliesId(dentalSuppliesId)
+                                     .description(dentalSuppliesRequest.getDescription())
+                                     .SuppliesName(dentalSuppliesRequest.getSuppliesName())
+                                     .distributionSupplies(distributionSuppliesRepository.findById(dentalSuppliesRequest.getDistributionSuppliesId()).orElse(null))
+                                     .build();
+        dentalSuppliesRepository.save(dentalSupplies);
+        return dentalSupplies;
+    }
+
+    @Override
+    public MessageResponse delete(int dentalSuppliesId) {
+        try {
+            dentalSuppliesRepository.deleteById(dentalSuppliesId);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+
+    @Override
+    public MessageResponse softDeleteDentalSupplies(int dentalSuppliesId) {
+        try {
+            var dentalSupplies =  dentalSuppliesRepository.findById(dentalSuppliesId)
+                                          .orElseThrow(() -> new RuntimeException("dental Supplies not found"));
+            dentalSupplies.setDeleted(true);
+            dentalSuppliesRepository.save(dentalSupplies);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+}

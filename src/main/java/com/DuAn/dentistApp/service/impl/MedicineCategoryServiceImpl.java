@@ -1,0 +1,82 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.MedicineCategory;
+import com.DuAn.dentistApp.model.request.MedicineCategoryRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.MedicinesCategoryRepository;
+import com.DuAn.dentistApp.service.service.MedicinesCategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class MedicineCategoryServiceImpl implements MedicinesCategoryService {
+
+    @Autowired
+    private MedicinesCategoryRepository medicineCategoryRepository;
+
+    @Override
+    public MedicineCategory findByMedicineCategoryId(int categoryId) {
+        return medicineCategoryRepository.findById(categoryId).orElse(null);
+    }
+
+    @Override
+    public List<MedicineCategory> findAllMedicineCategories() {
+        return medicineCategoryRepository.findAll() ;
+    }
+
+    @Override
+    public List<MedicineCategory> findAllMedicineCategoriesExceptDeleted() {
+        return medicineCategoryRepository.findAll().stream()
+                .filter(medicineCategory -> !medicineCategory.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public MedicineCategory saveMedicineCategory(MedicineCategoryRequest categoryRequest) {
+        MedicineCategory category = MedicineCategory.builder()
+                .name(categoryRequest.getName())
+                .description(categoryRequest.getDescription())
+                .build();
+        medicineCategoryRepository.save(category);
+        return category;
+    }
+
+    @Override
+    public MedicineCategory updateMedicineCategory(int categoryId, MedicineCategoryRequest categoryRequest) {
+        MedicineCategory category = MedicineCategory.builder()
+                .medicineCategoryId(categoryId)
+                .name(categoryRequest.getName())
+                .description(categoryRequest.getDescription())
+                .build();
+        medicineCategoryRepository.save(category);
+        return category;
+    }
+
+    @Override
+    public MessageResponse deleteMedicineCategory(int categoryId) {
+        try {
+            medicineCategoryRepository.deleteById(categoryId) ;
+            return new MessageResponse("Successfully") ;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new MessageResponse("Failed") ;
+        }
+    }
+
+    @Override
+    public MessageResponse softDeleteMedicineCategory(int categoryId) {
+        try {
+            MedicineCategory medicineCategory = medicineCategoryRepository.findById(categoryId)
+                                                        .orElseThrow(() -> new RuntimeException("medicine category not found")) ;
+            medicineCategory.setDeleted(true) ;
+            medicineCategoryRepository.save(medicineCategory) ;
+            return new MessageResponse("Successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new MessageResponse("Failed");
+        }
+    }
+}

@@ -1,0 +1,89 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.Role;
+import com.DuAn.dentistApp.model.request.RoleRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.RoleRepositoty;
+import com.DuAn.dentistApp.service.service.RoleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class RoleServiceImpl implements RoleService {
+    @Autowired
+    RoleRepositoty roleRepositoty;
+
+    @Override
+    public Role findByRoleName(String roleName) {
+        return roleRepositoty.findByRoleName(roleName).orElseThrow(null);
+    }
+
+    @Override
+    public Role findByRoleId(int roleId) {
+        return roleRepositoty.findById(roleId).orElse(null);
+    }
+
+    @Override
+    public List<Role> findAllRole() {
+        return roleRepositoty.findAll() ;
+    }
+
+    @Override
+    public List<Role> findAllRoleExceptDeleted() {
+        return roleRepositoty.findAll().stream()
+                .filter(role -> !role.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Role saveRole(RoleRequest roleRequest) {
+       var role = Role.builder()
+                  .roleName(roleRequest.getRoleName())
+                  .description(roleRequest.getDescription()).build();
+       roleRepositoty.save(role);
+       return role;
+    }
+
+    @Override
+    public Role updateRole(int roleId, RoleRequest roleRequest) {
+        var role = Role
+                           .builder()
+                           .roleId(roleId)
+                           .roleName(roleRequest.getRoleName())
+                           .description(roleRequest.getDescription())
+                           .build();
+        roleRepositoty.save(role);
+        return role;
+    }
+
+    @Override
+    public MessageResponse delete(int roleId) {
+        try {
+            roleRepositoty.deleteById(roleId);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+
+        }
+
+    }
+
+    @Override
+    public MessageResponse softDeleteRole(int roleId) {
+        try {
+            var role = roleRepositoty.findById(roleId)
+                               .orElseThrow(() -> new RuntimeException("role not found"));
+            role.setDeleted(true) ;
+            roleRepositoty.save(role);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+
+        }
+    }
+}

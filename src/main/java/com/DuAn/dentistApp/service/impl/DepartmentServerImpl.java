@@ -1,0 +1,83 @@
+package com.DuAn.dentistApp.service.impl;
+
+import com.DuAn.dentistApp.entities.Department;
+import com.DuAn.dentistApp.model.request.DepartmentRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.repositories.DepartmentRepository;
+import com.DuAn.dentistApp.service.service.DepartmentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class DepartmentServerImpl implements DepartmentService {
+    @Autowired
+    DepartmentRepository departmentRepository;
+    @Override
+    public Department findByDepartmentId(int departmentId) {
+        return departmentRepository.findById(departmentId).orElseThrow(null);
+    }
+
+    @Override
+    public List<Department> findAllDepartment() {
+        return departmentRepository.findAll() ;
+    }
+
+    @Override
+    public List<Department> findAllDepartmentExceptDeleted() {
+        return departmentRepository.findAll().stream()
+                .filter(department -> !department.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Department saveDepartment(DepartmentRequest departmentRequest) {
+        var department = Department
+                                 .builder()
+                                 .departmentName(departmentRequest.getDepartmentName())
+                                 .description(departmentRequest.getDescription())
+                                 .build();
+        departmentRepository.save(department);
+        return department;
+    }
+
+    @Override
+    public Department updateDepartment(int departmentId, DepartmentRequest departmentRequest) {
+        var department = Department
+                                 .builder()
+                                 .departmentId(departmentId)
+                                 .departmentName(departmentRequest.getDepartmentName())
+                                 .description(departmentRequest.getDescription())
+                                 .build();
+        departmentRepository.save(department);
+        return department;
+    }
+
+    @Override
+    public MessageResponse delete(int departmentId) {
+        try {
+            departmentRepository.deleteById(departmentId);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+
+    }
+
+    @Override
+    public MessageResponse softDeleteDepartment(int departmentId) {
+        try {
+            var department = departmentRepository.findById(departmentId)
+                                     .orElseThrow(() -> new RuntimeException("department not found"));
+            department.setDeleted(true);
+            departmentRepository.save(department);
+            return new MessageResponse("successfully");
+        }catch (Exception e){
+            e.printStackTrace();
+            return new MessageResponse("fail");
+        }
+    }
+}

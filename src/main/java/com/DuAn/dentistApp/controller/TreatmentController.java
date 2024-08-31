@@ -1,0 +1,79 @@
+package com.DuAn.dentistApp.controller;
+
+import com.DuAn.dentistApp.entities.Treatment;
+import com.DuAn.dentistApp.model.request.TreatmentRequest;
+import com.DuAn.dentistApp.model.response.MessageResponse;
+import com.DuAn.dentistApp.service.service.TreatmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+@Validated
+public class TreatmentController {
+    @Autowired
+    TreatmentService treatmentService;
+    @GetMapping("treatment")
+    @Operation(summary = "List treatment")
+    public ResponseEntity<List<Treatment>> getAllTreatment() {
+        return ResponseEntity.ok(treatmentService.findAllTreatment());
+    }
+
+    @GetMapping("treatment-except-deleted")
+    @Operation(summary = "List treatment except deleted")
+    public ResponseEntity<List<Treatment>> getAllTreatmentExceptDeleted() {
+        return ResponseEntity.ok(treatmentService.findAllTreatmentExceptDeleted());
+    }
+
+    @GetMapping("treatment-id/{Id}")
+    @Operation(summary = "dental treatment")
+    public ResponseEntity<Treatment> getTreatmentId( @PathVariable Integer Id) {
+        return ResponseEntity.ok(treatmentService.findByTreatmentId(Id));
+    }
+
+    @GetMapping("treatment-by-dental-issues")
+    @Operation(summary = "List treatment by dental issues")
+    public ResponseEntity<List<Object>> getTreatmentByDentalIssues(@RequestParam("ids") List<Integer> ids) {
+        return ResponseEntity.ok(treatmentService.findTreatmentByDentalIssues(ids));
+    }
+
+
+    @GetMapping("service-by-treatment")
+    @Operation(summary = "List service by treatment")
+    public ResponseEntity<List<Object>> getServiceByTreatment(@RequestParam("ids") List<Integer> ids) {
+        return ResponseEntity.ok(treatmentService.findServiceByTreatment(ids));
+    }
+
+
+    @PostMapping("treatment")
+    @Operation(summary = "Save treatment")
+    public ResponseEntity<Treatment> saveTreatment(@Valid @RequestBody TreatmentRequest treatmentRequest){
+        return ResponseEntity.ok(treatmentService.saveTreatment(treatmentRequest));
+    }
+    @PutMapping("treatment/{Id}")
+    @Operation(summary = "update treatment")
+    public ResponseEntity<Treatment> updateTreatment(@PathVariable int Id, @Valid @RequestBody TreatmentRequest treatmentRequest){
+        return ResponseEntity.ok(treatmentService.updateTreatment(Id, treatmentRequest));
+    }
+
+    @DeleteMapping("treatment/{Id}")
+    @Operation(summary = "delete treatment")
+    public ResponseEntity<MessageResponse> deleteTreatment(@PathVariable int Id){
+        return ResponseEntity.ok(treatmentService.delete(Id));
+    }
+
+    @DeleteMapping("soft-delete-treatment/{Id}")
+    @Operation(summary = "delete soft treatment")
+    public ResponseEntity<MessageResponse> softDeleteTreatment(@PathVariable int Id){
+        return ResponseEntity.ok(treatmentService.softDeleteTreatment(Id));
+    }
+}
